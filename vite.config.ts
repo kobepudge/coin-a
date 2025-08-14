@@ -47,10 +47,10 @@ export default defineConfig({
           return 'assets/[name]-[hash].[ext]'
         }
       }
-    },
-    optimizeDeps: {
-      include: ['vue', 'vue-router', 'pinia', 'axios', 'naive-ui']
     }
+  },
+  optimizeDeps: {
+    include: ['vue', 'vue-router', 'pinia', 'axios', 'naive-ui']
   },
   css: {
     postcss: {
