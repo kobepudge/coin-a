@@ -82,7 +82,7 @@ body {
 
 /* 自适应卡片 */
 .responsive-card {
-  @apply card-adaptive;
+  @apply bg-white rounded-lg shadow-sm border border-gray-200;
   padding: 1rem;
   margin-bottom: 1rem;
 }
