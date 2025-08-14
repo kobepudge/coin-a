@@ -100,7 +100,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { 
   NLayout, NLayoutSider, NLayoutHeader, NLayoutContent, 
@@ -119,6 +119,16 @@ const authStore = useAuthStore()
 const collapsed = ref(false)
 const pendingOrdersCount = ref(5) // TODO: 从API获取
 const userAvatar = ref('')
+
+// 响应式处理
+const handleResize = () => {
+  const width = window.innerWidth
+  if (width < 768) {
+    collapsed.value = true
+  } else if (width > 1024) {
+    collapsed.value = false
+  }
+}
 
 // 当前页面标题
 const currentPageTitle = computed(() => {
@@ -248,6 +258,14 @@ onMounted(() => {
   if (!authStore.isAuthenticated) {
     router.push('/admin/login')
   }
+
+  // 初始化响应式处理
+  handleResize()
+  window.addEventListener('resize', handleResize)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize)
 })
 </script>
 
@@ -257,10 +275,42 @@ onMounted(() => {
   position: fixed;
   left: 0;
   top: 0;
+  z-index: 100;
 }
 
 :deep(.n-layout-sider-scroll-container) {
   display: flex;
   flex-direction: column;
+}
+
+/* 响应式布局优化 */
+@media (max-width: 768px) {
+  .admin-sidebar {
+    z-index: 1000;
+  }
+
+  /* 主内容区域在移动端的左边距调整 */
+  :deep(.n-layout:not(.n-layout--has-sider)) {
+    margin-left: 0;
+  }
+
+  /* 确保内容不被侧边栏遮挡 */
+  :deep(.n-layout-content) {
+    padding: 16px;
+  }
+}
+
+/* 平板端优化 */
+@media (min-width: 769px) and (max-width: 1024px) {
+  :deep(.n-layout-content) {
+    padding: 20px;
+  }
+}
+
+/* 桌面端 */
+@media (min-width: 1025px) {
+  :deep(.n-layout-content) {
+    padding: 24px;
+  }
 }
 </style>

@@ -119,24 +119,44 @@
     </div>
 
     <!-- 新增/编辑商家弹窗 -->
-    <n-modal v-model:show="showCreateModal" preset="card" title="新增商家" style="width: 600px">
+    <n-modal
+      v-model:show="showCreateModal"
+      preset="card"
+      title="新增商家"
+      class="merchant-modal"
+      :style="modalStyle"
+    >
       <merchant-form
         :merchant="editingMerchant"
+        mode="create"
         @submit="handleSubmit"
         @cancel="showCreateModal = false"
       />
     </n-modal>
 
-    <n-modal v-model:show="showEditModal" preset="card" title="编辑商家" style="width: 600px">
+    <n-modal
+      v-model:show="showEditModal"
+      preset="card"
+      title="编辑商家"
+      class="merchant-modal"
+      :style="modalStyle"
+    >
       <merchant-form
         :merchant="editingMerchant"
+        mode="edit"
         @submit="handleSubmit"
         @cancel="showEditModal = false"
       />
     </n-modal>
 
     <!-- 二维码预览弹窗 -->
-    <n-modal v-model:show="showQrPreview" preset="card" title="收款二维码预览" style="width: 400px">
+    <n-modal
+      v-model:show="showQrPreview"
+      preset="card"
+      title="收款二维码预览"
+      class="qr-preview-modal"
+      :style="qrModalStyle"
+    >
       <div class="flex flex-col items-center p-4">
         <img
           :src="previewQrUrl"
@@ -153,7 +173,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, h } from 'vue'
+import { ref, reactive, onMounted, computed, h } from 'vue'
 import { 
   NButton, NDataTable, NModal, NInput, NSelect, NIcon, useMessage, useDialog,
   type DataTableColumns, type PaginationProps
@@ -185,6 +205,46 @@ const showEditModal = ref(false)
 const showQrPreview = ref(false)
 const previewQrUrl = ref('')
 const editingMerchant = ref<Partial<Merchant>>({})
+
+// 响应式样式
+const modalStyle = computed(() => {
+  const width = window.innerWidth
+  if (width < 640) {
+    // 移动端：几乎全屏
+    return {
+      width: '95vw',
+      maxWidth: '95vw',
+      margin: '10px'
+    }
+  } else if (width < 1024) {
+    // 平板：适中宽度
+    return {
+      width: '80vw',
+      maxWidth: '700px'
+    }
+  } else {
+    // 桌面：固定宽度
+    return {
+      width: '600px',
+      maxWidth: '90vw'
+    }
+  }
+})
+
+const qrModalStyle = computed(() => {
+  const width = window.innerWidth
+  if (width < 640) {
+    return {
+      width: '90vw',
+      maxWidth: '90vw'
+    }
+  } else {
+    return {
+      width: '400px',
+      maxWidth: '90vw'
+    }
+  }
+})
 
 // 统计数据
 const stats = ref({
@@ -498,3 +558,47 @@ onMounted(() => {
   loadStats()
 })
 </script>
+
+<style scoped>
+/* 响应式弹窗样式 */
+:deep(.merchant-modal .n-card) {
+  margin: 10px;
+}
+
+:deep(.qr-preview-modal .n-card) {
+  margin: 10px;
+}
+
+/* 移动端优化 */
+@media (max-width: 640px) {
+  :deep(.merchant-modal .n-card) {
+    margin: 5px;
+    border-radius: 8px;
+  }
+
+  :deep(.qr-preview-modal .n-card) {
+    margin: 5px;
+    border-radius: 8px;
+  }
+
+  /* 表格在移动端的优化 */
+  :deep(.n-data-table) {
+    font-size: 14px;
+  }
+
+  :deep(.n-data-table .n-data-table-th) {
+    padding: 8px 4px;
+  }
+
+  :deep(.n-data-table .n-data-table-td) {
+    padding: 8px 4px;
+  }
+}
+
+/* 平板端优化 */
+@media (min-width: 641px) and (max-width: 1024px) {
+  :deep(.merchant-modal .n-card) {
+    margin: 20px;
+  }
+}
+</style>

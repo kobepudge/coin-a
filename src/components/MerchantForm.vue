@@ -113,6 +113,14 @@
       />
     </n-form-item>
   </n-form>
+
+  <!-- 操作按钮 -->
+  <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200">
+    <n-button @click="handleCancel">取消</n-button>
+    <n-button type="primary" :loading="submitting" @click="handleSubmit">
+      {{ mode === 'create' ? '创建' : '更新' }}
+    </n-button>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -132,6 +140,7 @@ interface Props {
 
 interface Emits {
   (e: 'submit', data: CreateMerchantData | UpdateMerchantData): void
+  (e: 'cancel'): void
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -145,6 +154,7 @@ const message = useMessage()
 const formRef = ref<FormInst | null>(null)
 const paymentQrFiles = ref<any[]>([])
 const uploading = ref(false)
+const submitting = ref(false)
 
 const formData = reactive<CreateMerchantData>({
   name: '',
@@ -278,6 +288,26 @@ const submit = async () => {
   if (await validate()) {
     emit('submit', { ...formData })
   }
+}
+
+// 处理提交按钮点击
+const handleSubmit = async () => {
+  if (!formRef.value) return
+
+  try {
+    await formRef.value.validate()
+    submitting.value = true
+    emit('submit', { ...formData })
+  } catch (error) {
+    console.error('表单验证失败:', error)
+  } finally {
+    submitting.value = false
+  }
+}
+
+// 处理取消按钮点击
+const handleCancel = () => {
+  emit('cancel')
 }
 
 // 重置表单
