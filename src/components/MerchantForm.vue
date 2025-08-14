@@ -64,7 +64,6 @@
     </n-form-item>
 
     <n-form-item
-      v-if="formData.type === 'seller'"
       label="收款二维码"
       path="payment_qr"
     >
@@ -90,12 +89,19 @@
       </div>
     </n-form-item>
 
-    <n-form-item label="游戏ID" path="transfer_game_id">
+    <n-form-item
+      v-if="formData.type === 'buyer'"
+      label="中转游戏ID"
+      path="transfer_game_id"
+    >
       <n-input
         v-model:value="formData.transfer_game_id"
-        placeholder="请输入转账游戏ID（可选）"
+        placeholder="请输入中转游戏ID（收货商家专用）"
         clearable
       />
+      <div class="text-xs text-gray-500 mt-1">
+        用于接收玩家转入的金币
+      </div>
     </n-form-item>
 
     <n-form-item label="排序" path="sort_order">
