@@ -134,6 +134,21 @@
         @cancel="showEditModal = false"
       />
     </n-modal>
+
+    <!-- 二维码预览弹窗 -->
+    <n-modal v-model:show="showQrPreview" preset="card" title="收款二维码预览" style="width: 400px">
+      <div class="flex flex-col items-center p-4">
+        <img
+          :src="previewQrUrl"
+          alt="收款二维码"
+          class="max-w-xs max-h-xs border rounded-lg shadow-sm"
+          @error="message.error('二维码加载失败')"
+        />
+        <div class="mt-4 text-sm text-gray-500 text-center">
+          点击右键可保存二维码图片
+        </div>
+      </div>
+    </n-modal>
   </div>
 </template>
 
@@ -167,6 +182,8 @@ const checkedRowKeys = ref<number[]>([])
 // 弹窗状态
 const showCreateModal = ref(false)
 const showEditModal = ref(false)
+const showQrPreview = ref(false)
+const previewQrUrl = ref('')
 const editingMerchant = ref<Partial<Merchant>>({})
 
 // 统计数据
@@ -261,12 +278,38 @@ const columns: DataTableColumns<Merchant> = [
     }
   },
   {
+    title: '收款二维码',
+    key: 'payment_qr',
+    width: 120,
+    render(row) {
+      if (row.type === 'buyer' || !row.payment_qr) return ''
+
+      const qrUrls = row.payment_qr.split(',').filter(url => url.trim())
+      if (qrUrls.length === 0) return ''
+
+      return h('div', { class: 'flex flex-wrap gap-1' },
+        qrUrls.slice(0, 3).map((url, index) =>
+          h(NButton, {
+            size: 'tiny',
+            tertiary: true,
+            type: 'info',
+            onClick: () => handlePreviewQr(url.trim())
+          }, { default: () => `二维码${index + 1}` })
+        ).concat(
+          qrUrls.length > 3 ? [
+            h('span', { class: 'text-xs text-gray-500' }, `+${qrUrls.length - 3}`)
+          ] : []
+        )
+      )
+    }
+  },
+  {
     title: '当前出货',
     key: 'is_current_seller',
     width: 100,
     render(row) {
       if (row.type === 'buyer') return ''
-      return row.is_current_seller 
+      return row.is_current_seller
         ? h('span', { class: 'text-green-600 font-medium' }, '是')
         : h(NButton, {
             size: 'small',
@@ -380,6 +423,12 @@ const handleDelete = (merchant: Merchant) => {
 }
 
 // 处理设置当前出货商家
+// 预览二维码
+const handlePreviewQr = (url: string) => {
+  previewQrUrl.value = url
+  showQrPreview.value = true
+}
+
 const handleSetCurrentSeller = async (merchant: Merchant) => {
   try {
     await setCurrentSeller(merchant.id)

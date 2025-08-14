@@ -63,12 +63,31 @@
       />
     </n-form-item>
 
-    <n-form-item label="收款二维码" path="payment_qr">
-      <n-input
-        v-model:value="formData.payment_qr"
-        placeholder="请输入收款二维码URL（可选）"
-        clearable
-      />
+    <n-form-item
+      v-if="formData.type === 'seller'"
+      label="收款二维码"
+      path="payment_qr"
+    >
+      <n-upload
+        v-model:file-list="paymentQrFiles"
+        :max="5"
+        accept="image/*"
+        list-type="image-card"
+        @change="handleQrUpload"
+        @remove="handleQrRemove"
+      >
+        <n-button v-if="paymentQrFiles.length < 5">
+          <template #icon>
+            <n-icon><CloudUploadOutline /></n-icon>
+          </template>
+          上传收款二维码
+        </n-button>
+      </n-upload>
+      <div class="text-xs text-gray-500 mt-2">
+        <p>• 支持上传多个支付宝/微信收款二维码</p>
+        <p>• 建议上传清晰的二维码图片，最多5张</p>
+        <p>• 支持 JPG、PNG 格式，单张不超过5MB</p>
+      </div>
     </n-form-item>
 
     <n-form-item label="游戏ID" path="transfer_game_id">
@@ -92,8 +111,13 @@
 
 <script setup lang="ts">
 import { ref, reactive, watch } from 'vue'
-import { NForm, NFormItem, NInput, NSelect, NInputNumber, type FormInst, type FormRules } from 'naive-ui'
+import {
+  NForm, NFormItem, NInput, NSelect, NInputNumber, NUpload, NIcon, NButton,
+  useMessage, type FormInst, type FormRules
+} from 'naive-ui'
+import { CloudUploadOutline } from '@vicons/ionicons5'
 import type { Merchant, CreateMerchantData, UpdateMerchantData } from '@/types'
+import { uploadPaymentQr } from '@/api/upload'
 
 interface Props {
   merchant?: Merchant | null
@@ -111,7 +135,10 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<Emits>()
 
+const message = useMessage()
 const formRef = ref<FormInst | null>(null)
+const paymentQrFiles = ref<any[]>([])
+const uploading = ref(false)
 
 const formData = reactive<CreateMerchantData>({
   name: '',
@@ -152,6 +179,38 @@ const rules: FormRules = {
   ]
 }
 
+// 处理二维码上传
+const handleQrUpload = async ({ file }: any) => {
+  if (!file) return
+
+  uploading.value = true
+  try {
+    const response = await uploadPaymentQr(file.file)
+
+    // 将新上传的URL添加到payment_qr字段（支持多个二维码）
+    const currentQrs = formData.payment_qr ? formData.payment_qr.split(',') : []
+    currentQrs.push(response.data.url)
+    formData.payment_qr = currentQrs.join(',')
+
+    message.success('收款二维码上传成功')
+  } catch (error: any) {
+    message.error(error?.response?.data?.message || '二维码上传失败')
+    // 移除失败的文件
+    paymentQrFiles.value = paymentQrFiles.value.filter(f => f.id !== file.id)
+  } finally {
+    uploading.value = false
+  }
+}
+
+// 处理二维码删除
+const handleQrRemove = ({ file }: any) => {
+  if (file.url && formData.payment_qr) {
+    const currentQrs = formData.payment_qr.split(',')
+    const updatedQrs = currentQrs.filter(url => url !== file.url)
+    formData.payment_qr = updatedQrs.join(',')
+  }
+}
+
 // 监听merchant变化，更新表单数据
 watch(() => props.merchant, (newMerchant) => {
   if (newMerchant) {
@@ -167,6 +226,19 @@ watch(() => props.merchant, (newMerchant) => {
       transfer_game_id: newMerchant.transfer_game_id || '',
       sort_order: newMerchant.sort_order || 0
     })
+
+    // 如果有支付二维码，设置文件列表
+    if (newMerchant.payment_qr) {
+      const qrUrls = newMerchant.payment_qr.split(',').filter(url => url.trim())
+      paymentQrFiles.value = qrUrls.map((url, index) => ({
+        id: `existing-${index}`,
+        name: `收款二维码${index + 1}`,
+        status: 'finished',
+        url: url.trim()
+      }))
+    } else {
+      paymentQrFiles.value = []
+    }
   } else {
     // 重置表单
     Object.assign(formData, {
@@ -181,6 +253,7 @@ watch(() => props.merchant, (newMerchant) => {
       transfer_game_id: '',
       sort_order: 0
     })
+    paymentQrFiles.value = []
   }
 }, { immediate: true })
 
