@@ -96,7 +96,7 @@ body {
 
 /* 自适应按钮 */
 .responsive-button {
-  @apply btn-adaptive;
+  @apply bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition-colors;
   display: inline-flex;
   align-items: center;
   justify-content: center;
