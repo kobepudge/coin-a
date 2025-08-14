@@ -1,0 +1,179 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+/* 自定义CSS变量 */
+:root {
+  --color-primary: #0ea5e9;
+  --color-primary-hover: #0284c7;
+  --color-secondary: #d946ef;
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+  --color-background: #ffffff;
+  --color-surface: #f8fafc;
+  --color-text: #1e293b;
+  --color-text-secondary: #64748b;
+}
+
+/* 暗色模式支持 */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-background: #0f172a;
+    --color-surface: #1e293b;
+    --color-text: #f1f5f9;
+    --color-text-secondary: #cbd5e1;
+  }
+}
+
+/* 基础样式重置 */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background-color: var(--color-background);
+  color: var(--color-text);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 响应式设计基础类 */
+.container {
+  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+}
+
+.container-sm {
+  @apply max-w-3xl mx-auto px-4 sm:px-6;
+}
+
+/* 现代化卡片样式 */
+.card {
+  @apply bg-white rounded-2xl shadow-soft border border-gray-100;
+}
+
+.card-hover {
+  @apply transition-all duration-300 hover:shadow-medium hover:-translate-y-1;
+}
+
+/* 渐变背景 */
+.gradient-primary {
+  background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%);
+}
+
+.gradient-secondary {
+  background: linear-gradient(135deg, #d946ef 0%, #8b5cf6 100%);
+}
+
+/* 按钮基础样式 */
+.btn-primary {
+  @apply bg-primary-500 hover:bg-primary-600 text-white px-6 py-3 rounded-xl font-medium transition-colors duration-200 shadow-sm hover:shadow-md;
+}
+
+.btn-secondary {
+  @apply bg-secondary-500 hover:bg-secondary-600 text-white px-6 py-3 rounded-xl font-medium transition-colors duration-200 shadow-sm hover:shadow-md;
+}
+
+.btn-outline {
+  @apply border-2 border-primary-500 text-primary-500 hover:bg-primary-500 hover:text-white px-6 py-3 rounded-xl font-medium transition-all duration-200;
+}
+
+/* 文字样式 */
+.text-gradient {
+  background: linear-gradient(135deg, #0ea5e9, #3b82f6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* 动画关键帧 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bounceSoft {
+  0%, 20%, 53%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40%, 43% {
+    transform: translateY(-10px);
+  }
+  70% {
+    transform: translateY(-5px);
+  }
+}
+
+/* 移动端优化 */
+@media (max-width: 640px) {
+  .mobile-padding {
+    @apply px-4 py-6;
+  }
+  
+  .mobile-text {
+    @apply text-sm;
+  }
+  
+  /* 触摸友好的按钮尺寸 */
+  .btn-mobile {
+    @apply min-h-[44px] px-8 text-base;
+  }
+}
+
+/* 加载动画 */
+.loading-spinner {
+  @apply inline-block w-6 h-6 border-2 border-current border-t-transparent rounded-full animate-spin;
+}
+
+/* 滚动条样式 */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* 选择文本样式 */
+::selection {
+  background-color: rgba(14, 165, 233, 0.2);
+}
+
+/* 焦点样式 */
+.focus-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-white;
+}
