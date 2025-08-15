@@ -74,7 +74,7 @@
           :max="5"
           accept="image/*"
           list-type="image-card"
-          @change="handleQrUpload"
+          :custom-request="handleQrUploadRequest"
           @remove="handleQrRemove"
         >
           <n-button v-if="paymentQrFiles.length < 5">
@@ -176,7 +176,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch } from 'vue'
+import { ref, reactive, watch, nextTick } from 'vue'
 import {
   NForm, NFormItem, NInput, NSelect, NInputNumber, NUpload, NIcon, NButton,
   useMessage, type FormInst, type FormRules
@@ -248,55 +248,46 @@ const rules: FormRules = {
   ]
 }
 
-// 处理二维码上传
-const handleQrUpload = async ({ file }: any) => {
-  if (!file) return
+// 处理二维码上传请求（阻止自动上传）
+const handleQrUploadRequest = ({ file, onFinish, onError }: any) => {
+  // 不立即上传，只是标记文件为已选择状态
+  // 实际上传将在提交表单时进行
+  onFinish()
+}
 
-  uploading.value = true
-  try {
-    const response = await uploadPaymentQr(file.file)
+// 批量上传二维码文件
+const uploadQrFiles = async (): Promise<string[]> => {
+  const uploadedUrls: string[] = []
 
-    // 更新文件对象的URL
-    const fileIndex = paymentQrFiles.value.findIndex(f => f.id === file.id)
-    if (fileIndex !== -1) {
-      paymentQrFiles.value[fileIndex].url = response.data.url
-      paymentQrFiles.value[fileIndex].status = 'finished'
+  for (const file of paymentQrFiles.value) {
+    // 如果文件已经有URL（编辑现有商家时），直接使用
+    if (file.url && file.status === 'finished') {
+      uploadedUrls.push(file.url)
+      continue
     }
 
-    // 更新payment_qr字符串
-    updatePaymentQrString()
-
-    message.success('收款二维码上传成功')
-  } catch (error: any) {
-    message.error(error?.response?.data?.message || '二维码上传失败')
-    // 移除失败的文件
-    paymentQrFiles.value = paymentQrFiles.value.filter(f => f.id !== file.id)
-  } finally {
-    uploading.value = false
+    // 如果是新文件，需要上传
+    if (file.file) {
+      try {
+        const response = await uploadPaymentQr(file.file)
+        uploadedUrls.push(response.data.url)
+      } catch (error: any) {
+        message.error(`二维码 ${file.name} 上传失败: ${error?.response?.data?.message || '未知错误'}`)
+        throw error
+      }
+    }
   }
+
+  return uploadedUrls
 }
 
 // 处理二维码删除
 const handleQrRemove = ({ file }: any) => {
-  // 从文件列表中移除 - 使用多种方式确保能正确匹配
-  paymentQrFiles.value = paymentQrFiles.value.filter(f => {
-    // 优先使用 id 匹配
-    if (f.id && file.id && f.id === file.id) {
-      return false
-    }
-    // 如果 id 不匹配，尝试使用 url 匹配
-    if (f.url && file.url && f.url === file.url) {
-      return false
-    }
-    // 如果都没有，使用 name 匹配
-    if (f.name && file.name && f.name === file.name) {
-      return false
-    }
-    return true
+  // n-upload 组件已经通过 v-model:file-list 自动删除了文件
+  // 我们只需要在下一个 tick 更新 payment_qr 字符串即可
+  nextTick(() => {
+    updatePaymentQrString()
   })
-
-  // 更新payment_qr字符串
-  updatePaymentQrString()
 }
 
 // 拖拽开始
@@ -339,10 +330,10 @@ const moveQrDown = (index: number) => {
   updatePaymentQrString()
 }
 
-// 更新payment_qr字符串
+// 更新payment_qr字符串（仅用于已有URL的文件）
 const updatePaymentQrString = () => {
   const urls = paymentQrFiles.value
-    .filter(file => file.url && file.url.trim()) // 确保有有效的URL
+    .filter(file => file.url && file.url.trim() && file.status === 'finished') // 只处理已完成的文件
     .map(file => file.url.trim()) // 去除空格
     .filter(url => url.length > 0) // 再次确保不是空字符串
 
@@ -419,6 +410,18 @@ const handleSubmit = async () => {
   try {
     await formRef.value.validate()
     submitting.value = true
+
+    // 如果有二维码文件需要上传，先上传
+    if (paymentQrFiles.value.length > 0) {
+      try {
+        const uploadedUrls = await uploadQrFiles()
+        formData.payment_qr = uploadedUrls.join(',')
+      } catch (error) {
+        message.error('二维码上传失败，请重试')
+        return
+      }
+    }
+
     emit('submit', { ...formData })
   } catch (error) {
     console.error('表单验证失败:', error)
