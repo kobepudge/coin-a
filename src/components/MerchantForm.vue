@@ -67,25 +67,77 @@
       label="收款二维码"
       path="payment_qr"
     >
-      <n-upload
-        v-model:file-list="paymentQrFiles"
-        :max="5"
-        accept="image/*"
-        list-type="image-card"
-        @change="handleQrUpload"
-        @remove="handleQrRemove"
-      >
-        <n-button v-if="paymentQrFiles.length < 5">
-          <template #icon>
-            <n-icon><CloudUploadOutline /></n-icon>
-          </template>
-          上传收款二维码
-        </n-button>
-      </n-upload>
+      <div class="space-y-4">
+        <!-- 上传区域 -->
+        <n-upload
+          v-model:file-list="paymentQrFiles"
+          :max="5"
+          accept="image/*"
+          list-type="image-card"
+          @change="handleQrUpload"
+          @remove="handleQrRemove"
+        >
+          <n-button v-if="paymentQrFiles.length < 5">
+            <template #icon>
+              <n-icon><CloudUploadOutline /></n-icon>
+            </template>
+            上传收款二维码
+          </n-button>
+        </n-upload>
+
+        <!-- 排序区域 -->
+        <div v-if="paymentQrFiles.length > 1" class="space-y-2">
+          <div class="text-sm font-medium text-gray-700">二维码显示顺序（拖拽调整）：</div>
+          <div class="grid grid-cols-1 gap-2">
+            <div
+              v-for="(file, index) in paymentQrFiles"
+              :key="file.id"
+              class="flex items-center gap-3 p-3 border border-gray-200 rounded-lg bg-gray-50 cursor-move"
+              draggable="true"
+              @dragstart="handleDragStart(index)"
+              @dragover.prevent
+              @drop="handleDrop(index)"
+            >
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-medium text-gray-600">{{ index + 1 }}.</span>
+                <img
+                  :src="file.url"
+                  alt="二维码预览"
+                  class="w-12 h-12 object-cover rounded border"
+                />
+              </div>
+              <div class="flex-1">
+                <div class="text-sm font-medium">{{ file.name }}</div>
+                <div class="text-xs text-gray-500">
+                  {{ index === 0 ? '（前端显示）' : '（备用）' }}
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <n-button
+                  v-if="index > 0"
+                  size="small"
+                  @click="moveQrUp(index)"
+                >
+                  ↑
+                </n-button>
+                <n-button
+                  v-if="index < paymentQrFiles.length - 1"
+                  size="small"
+                  @click="moveQrDown(index)"
+                >
+                  ↓
+                </n-button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="text-xs text-gray-500 mt-2">
         <p>• 支持上传多个支付宝/微信收款二维码</p>
         <p>• 建议上传清晰的二维码图片，最多5张</p>
         <p>• 支持 JPG、PNG 格式，单张不超过5MB</p>
+        <p>• <strong>第一个二维码将在前端显示，其他作为备用</strong></p>
       </div>
     </n-form-item>
 
@@ -155,6 +207,7 @@ const formRef = ref<FormInst | null>(null)
 const paymentQrFiles = ref<any[]>([])
 const uploading = ref(false)
 const submitting = ref(false)
+const draggedIndex = ref<number | null>(null)
 
 const formData = reactive<CreateMerchantData>({
   name: '',
@@ -203,10 +256,15 @@ const handleQrUpload = async ({ file }: any) => {
   try {
     const response = await uploadPaymentQr(file.file)
 
-    // 将新上传的URL添加到payment_qr字段（支持多个二维码）
-    const currentQrs = formData.payment_qr ? formData.payment_qr.split(',') : []
-    currentQrs.push(response.data.url)
-    formData.payment_qr = currentQrs.join(',')
+    // 更新文件对象的URL
+    const fileIndex = paymentQrFiles.value.findIndex(f => f.id === file.id)
+    if (fileIndex !== -1) {
+      paymentQrFiles.value[fileIndex].url = response.data.url
+      paymentQrFiles.value[fileIndex].status = 'finished'
+    }
+
+    // 更新payment_qr字符串
+    updatePaymentQrString()
 
     message.success('收款二维码上传成功')
   } catch (error: any) {
@@ -220,11 +278,56 @@ const handleQrUpload = async ({ file }: any) => {
 
 // 处理二维码删除
 const handleQrRemove = ({ file }: any) => {
-  if (file.url && formData.payment_qr) {
-    const currentQrs = formData.payment_qr.split(',')
-    const updatedQrs = currentQrs.filter(url => url !== file.url)
-    formData.payment_qr = updatedQrs.join(',')
-  }
+  // 从文件列表中移除
+  paymentQrFiles.value = paymentQrFiles.value.filter(f => f.id !== file.id)
+  // 更新payment_qr字符串
+  updatePaymentQrString()
+}
+
+// 拖拽开始
+const handleDragStart = (index: number) => {
+  draggedIndex.value = index
+}
+
+// 拖拽放置
+const handleDrop = (targetIndex: number) => {
+  if (draggedIndex.value === null || draggedIndex.value === targetIndex) return
+
+  const files = [...paymentQrFiles.value]
+  const draggedFile = files[draggedIndex.value]
+
+  // 移除被拖拽的项
+  files.splice(draggedIndex.value, 1)
+  // 插入到目标位置
+  files.splice(targetIndex, 0, draggedFile)
+
+  paymentQrFiles.value = files
+  updatePaymentQrString()
+  draggedIndex.value = null
+}
+
+// 向上移动二维码
+const moveQrUp = (index: number) => {
+  if (index <= 0) return
+  const files = [...paymentQrFiles.value]
+  ;[files[index - 1], files[index]] = [files[index], files[index - 1]]
+  paymentQrFiles.value = files
+  updatePaymentQrString()
+}
+
+// 向下移动二维码
+const moveQrDown = (index: number) => {
+  if (index >= paymentQrFiles.value.length - 1) return
+  const files = [...paymentQrFiles.value]
+  ;[files[index], files[index + 1]] = [files[index + 1], files[index]]
+  paymentQrFiles.value = files
+  updatePaymentQrString()
+}
+
+// 更新payment_qr字符串
+const updatePaymentQrString = () => {
+  const urls = paymentQrFiles.value.map(file => file.url).filter(url => url)
+  formData.payment_qr = urls.join(',')
 }
 
 // 监听merchant变化，更新表单数据
