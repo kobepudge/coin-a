@@ -278,9 +278,6 @@ const handleQrUpload = async ({ file }: any) => {
 
 // 处理二维码删除
 const handleQrRemove = ({ file }: any) => {
-  console.log('删除文件:', file)
-  console.log('删除前文件列表:', paymentQrFiles.value)
-
   // 从文件列表中移除 - 使用多种方式确保能正确匹配
   paymentQrFiles.value = paymentQrFiles.value.filter(f => {
     // 优先使用 id 匹配
@@ -297,8 +294,6 @@ const handleQrRemove = ({ file }: any) => {
     }
     return true
   })
-
-  console.log('删除后文件列表:', paymentQrFiles.value)
 
   // 更新payment_qr字符串
   updatePaymentQrString()
@@ -346,18 +341,12 @@ const moveQrDown = (index: number) => {
 
 // 更新payment_qr字符串
 const updatePaymentQrString = () => {
-  console.log('更新前 paymentQrFiles:', paymentQrFiles.value)
-
   const urls = paymentQrFiles.value
     .filter(file => file.url && file.url.trim()) // 确保有有效的URL
     .map(file => file.url.trim()) // 去除空格
     .filter(url => url.length > 0) // 再次确保不是空字符串
 
-  console.log('提取的URLs:', urls)
-
   formData.payment_qr = urls.join(',')
-
-  console.log('更新后 payment_qr:', formData.payment_qr)
 }
 
 // 监听merchant变化，更新表单数据
