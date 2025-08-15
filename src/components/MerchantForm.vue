@@ -411,8 +411,9 @@ const handleSubmit = async () => {
     await formRef.value.validate()
     submitting.value = true
 
-    // 如果有二维码文件需要上传，先上传
+    // 处理二维码上传
     if (paymentQrFiles.value.length > 0) {
+      // 如果有二维码文件，先上传
       try {
         const uploadedUrls = await uploadQrFiles()
         formData.payment_qr = uploadedUrls.join(',')
@@ -420,6 +421,9 @@ const handleSubmit = async () => {
         message.error('二维码上传失败，请重试')
         return
       }
+    } else {
+      // 如果没有二维码文件，清空 payment_qr 字段
+      formData.payment_qr = ''
     }
 
     emit('submit', { ...formData })
