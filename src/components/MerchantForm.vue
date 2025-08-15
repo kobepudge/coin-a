@@ -278,8 +278,28 @@ const handleQrUpload = async ({ file }: any) => {
 
 // 处理二维码删除
 const handleQrRemove = ({ file }: any) => {
-  // 从文件列表中移除
-  paymentQrFiles.value = paymentQrFiles.value.filter(f => f.id !== file.id)
+  console.log('删除文件:', file)
+  console.log('删除前文件列表:', paymentQrFiles.value)
+
+  // 从文件列表中移除 - 使用多种方式确保能正确匹配
+  paymentQrFiles.value = paymentQrFiles.value.filter(f => {
+    // 优先使用 id 匹配
+    if (f.id && file.id && f.id === file.id) {
+      return false
+    }
+    // 如果 id 不匹配，尝试使用 url 匹配
+    if (f.url && file.url && f.url === file.url) {
+      return false
+    }
+    // 如果都没有，使用 name 匹配
+    if (f.name && file.name && f.name === file.name) {
+      return false
+    }
+    return true
+  })
+
+  console.log('删除后文件列表:', paymentQrFiles.value)
+
   // 更新payment_qr字符串
   updatePaymentQrString()
 }
@@ -326,8 +346,18 @@ const moveQrDown = (index: number) => {
 
 // 更新payment_qr字符串
 const updatePaymentQrString = () => {
-  const urls = paymentQrFiles.value.map(file => file.url).filter(url => url)
+  console.log('更新前 paymentQrFiles:', paymentQrFiles.value)
+
+  const urls = paymentQrFiles.value
+    .filter(file => file.url && file.url.trim()) // 确保有有效的URL
+    .map(file => file.url.trim()) // 去除空格
+    .filter(url => url.length > 0) // 再次确保不是空字符串
+
+  console.log('提取的URLs:', urls)
+
   formData.payment_qr = urls.join(',')
+
+  console.log('更新后 payment_qr:', formData.payment_qr)
 }
 
 // 监听merchant变化，更新表单数据
