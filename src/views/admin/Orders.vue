@@ -153,6 +153,7 @@
         v-if="selectedOrder"
         :order="selectedOrder"
         @update-status="handleUpdateOrderStatus"
+        @edit-notes="handleEditNotes"
         @close="showDetailModal = false"
       />
     </n-modal>
@@ -173,6 +174,29 @@
           <n-button @click="showBatchModal = false">取消</n-button>
           <n-button type="primary" :loading="batchSubmitting" @click="confirmBatchUpdate">
             确认
+          </n-button>
+        </div>
+      </template>
+    </n-modal>
+
+    <!-- 编辑备注弹窗 -->
+    <n-modal v-model:show="showEditNotesModal" preset="dialog" title="编辑订单备注">
+      <div class="space-y-4">
+        <p>订单 #{{ editingOrder?.id }} - {{ editingOrder?.player_game_id }}</p>
+        <n-input
+          v-model:value="editingNotes"
+          type="textarea"
+          placeholder="请输入管理员备注..."
+          :rows="4"
+          maxlength="1000"
+          show-count
+        />
+      </div>
+      <template #action>
+        <div class="flex gap-2">
+          <n-button @click="showEditNotesModal = false">取消</n-button>
+          <n-button type="primary" :loading="notesSubmitting" @click="confirmUpdateNotes">
+            保存
           </n-button>
         </div>
       </template>
@@ -215,10 +239,14 @@ const merchantOptions = ref<Array<{ label: string; value: number }>>([])
 // 弹窗状态
 const showDetailModal = ref(false)
 const showBatchModal = ref(false)
+const showEditNotesModal = ref(false)
 const selectedOrder = ref<Order | null>(null)
+const editingOrder = ref<Order | null>(null)
+const editingNotes = ref('')
 const batchStatus = ref<OrderStatus>('completed')
 const batchNote = ref('')
 const batchSubmitting = ref(false)
+const notesSubmitting = ref(false)
 
 // 统计数据
 const stats = ref({
@@ -433,6 +461,38 @@ const handleUpdateOrderStatus = async (orderId: number, status: OrderStatus, not
     showDetailModal.value = false
   } catch (error: any) {
     message.error(error?.response?.data?.message || '更新失败')
+  }
+}
+
+// 编辑备注
+const handleEditNotes = (order: Order) => {
+  editingOrder.value = order
+  editingNotes.value = order.admin_notes || ''
+  showEditNotesModal.value = true
+}
+
+// 确认更新备注
+const confirmUpdateNotes = async () => {
+  if (!editingOrder.value) return
+
+  try {
+    notesSubmitting.value = true
+    await updateOrderStatus(editingOrder.value.id, {
+      status: editingOrder.value.status,
+      admin_note: editingNotes.value
+    })
+    message.success('备注更新成功')
+    loadOrders()
+    loadStats()
+    showEditNotesModal.value = false
+    // 如果详情弹窗还开着，也需要更新
+    if (selectedOrder.value && selectedOrder.value.id === editingOrder.value.id) {
+      selectedOrder.value.admin_notes = editingNotes.value
+    }
+  } catch (error: any) {
+    message.error(error?.response?.data?.message || '更新失败')
+  } finally {
+    notesSubmitting.value = false
   }
 }
 
