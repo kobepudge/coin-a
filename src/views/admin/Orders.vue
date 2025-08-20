@@ -201,6 +201,27 @@
         </div>
       </template>
     </n-modal>
+
+    <!-- 转账截图查看弹窗 -->
+    <n-modal v-model:show="showScreenshotModal" preset="card" style="width: 600px" title="转账截图">
+      <div class="text-center">
+        <img
+          v-if="currentScreenshotUrl"
+          :src="currentScreenshotUrl"
+          alt="转账截图"
+          class="max-w-full max-h-96 mx-auto rounded-lg shadow-lg"
+          @error="handleImageError"
+        />
+        <div v-else class="text-gray-500 py-8">
+          图片加载失败
+        </div>
+      </div>
+      <template #action>
+        <div class="flex justify-center">
+          <n-button @click="showScreenshotModal = false">关闭</n-button>
+        </div>
+      </template>
+    </n-modal>
   </div>
 </template>
 
@@ -210,10 +231,10 @@ import {
   NButton, NDataTable, NModal, NInput, NSelect, NDatePicker, NIcon, 
   useMessage, useDialog, type DataTableColumns, type PaginationProps
 } from 'naive-ui'
-import { 
+import {
   DownloadOutline, RefreshOutline, DocumentTextOutline, TimeOutline,
   CheckmarkCircleOutline, CloseCircleOutline, StatsChartOutline,
-  SearchOutline, EyeOutline
+  SearchOutline, EyeOutline, ImageOutline
 } from '@vicons/ionicons5'
 import type { Order, OrderStatus } from '@/types'
 import { getOrders, getOrderStats, updateOrderStatus, batchUpdateOrderStatus, exportOrders as exportOrdersAPI } from '@/api/order'
@@ -240,8 +261,10 @@ const merchantOptions = ref<Array<{ label: string; value: number }>>([])
 const showDetailModal = ref(false)
 const showBatchModal = ref(false)
 const showEditNotesModal = ref(false)
+const showScreenshotModal = ref(false)
 const selectedOrder = ref<Order | null>(null)
 const editingOrder = ref<Order | null>(null)
+const currentScreenshotUrl = ref<string>('')
 const editingNotes = ref('')
 const batchStatus = ref<OrderStatus>('completed')
 const batchNote = ref('')
@@ -334,6 +357,24 @@ const columns: DataTableColumns<Order> = [
       return h('span', {
         class: `px-2 py-1 rounded-full text-xs font-medium ${tag.class}`
       }, tag.text)
+    }
+  },
+  {
+    title: '转账截图',
+    key: 'transfer_screenshot',
+    width: 100,
+    align: 'center',
+    render(row) {
+      if (row.transfer_screenshot_url) {
+        return h(NButton, {
+          size: 'small',
+          tertiary: true,
+          type: 'info',
+          onClick: () => handleViewScreenshot(row.transfer_screenshot_url)
+        }, { default: () => h(NIcon, null, { default: () => h(ImageOutline) }) })
+      } else {
+        return h('span', { class: 'text-gray-400 text-xs' }, '无')
+      }
     }
   },
   {
@@ -469,6 +510,17 @@ const handleEditNotes = (order: Order) => {
   editingOrder.value = order
   editingNotes.value = order.admin_notes || ''
   showEditNotesModal.value = true
+}
+
+// 查看转账截图
+const handleViewScreenshot = (screenshotUrl: string) => {
+  currentScreenshotUrl.value = screenshotUrl
+  showScreenshotModal.value = true
+}
+
+// 处理图片加载错误
+const handleImageError = () => {
+  message.error('图片加载失败')
 }
 
 // 确认更新备注

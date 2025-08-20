@@ -42,6 +42,20 @@
           preview-disabled
         />
       </n-descriptions-item>
+
+      <n-descriptions-item label="转账截图" v-if="order.transfer_screenshot_url">
+        <n-image
+          :src="order.transfer_screenshot_url"
+          width="120"
+          height="120"
+          object-fit="cover"
+          preview-disabled
+        />
+      </n-descriptions-item>
+
+      <n-descriptions-item label="转账截图" v-else>
+        <span class="text-gray-400">未上传</span>
+      </n-descriptions-item>
       
       <n-descriptions-item label="创建时间">
         {{ formatDate(order.created_at) }}

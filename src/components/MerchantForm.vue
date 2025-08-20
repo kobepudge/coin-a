@@ -63,6 +63,14 @@
       />
     </n-form-item>
 
+    <n-form-item label="支付宝账号" path="alipay_account">
+      <n-input
+        v-model:value="formData.alipay_account"
+        placeholder="请输入支付宝账号（可选）"
+        clearable
+      />
+    </n-form-item>
+
     <n-form-item
       label="收款二维码"
       path="payment_qr"
@@ -217,6 +225,7 @@ const formData = reactive<CreateMerchantData>({
   stock_or_demand: '',
   speed: '',
   guarantee: '',
+  alipay_account: '',
   payment_qr: '',
   transfer_game_id: '',
   sort_order: 0
@@ -351,6 +360,7 @@ watch(() => props.merchant, (newMerchant) => {
       stock_or_demand: newMerchant.stock_or_demand,
       speed: newMerchant.speed,
       guarantee: newMerchant.guarantee || '',
+      alipay_account: newMerchant.alipay_account || '',
       payment_qr: newMerchant.payment_qr || '',
       transfer_game_id: newMerchant.transfer_game_id || '',
       sort_order: newMerchant.sort_order || 0
@@ -378,6 +388,7 @@ watch(() => props.merchant, (newMerchant) => {
       stock_or_demand: '',
       speed: '',
       guarantee: '',
+      alipay_account: '',
       payment_qr: '',
       transfer_game_id: '',
       sort_order: 0
@@ -453,6 +464,7 @@ const reset = () => {
       stock_or_demand: '',
       speed: '',
       guarantee: '',
+      alipay_account: '',
       payment_qr: '',
       transfer_game_id: '',
       sort_order: 0

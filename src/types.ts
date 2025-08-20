@@ -58,6 +58,7 @@ export interface Merchant {
   stock_or_demand: string
   speed: string
   guarantee?: string
+  alipay_account?: string // 支付宝账号
   payment_qr?: string
   transfer_game_id?: string
   is_current_seller: boolean
@@ -75,6 +76,7 @@ export interface CreateMerchantData {
   stock_or_demand: string
   speed: string
   guarantee?: string
+  alipay_account?: string // 支付宝账号
   payment_qr?: string
   transfer_game_id?: string
   sort_order?: number
@@ -87,6 +89,7 @@ export interface UpdateMerchantData {
   stock_or_demand?: string
   speed?: string
   guarantee?: string
+  alipay_account?: string // 支付宝账号
   payment_qr?: string
   transfer_game_id?: string
   status?: 'online' | 'offline'
@@ -101,6 +104,7 @@ export interface Order {
   merchant_id: ID
   player_game_id: string
   payment_qr_url?: string
+  transfer_screenshot_url?: string
   status: OrderStatus
   admin_notes?: string
   created_at: Timestamp
@@ -112,6 +116,7 @@ export interface CreateOrderData {
   merchant_id: ID
   player_game_id: string
   payment_qr_url?: string
+  transfer_screenshot_url?: string
 }
 
 export interface UpdateOrderData {
