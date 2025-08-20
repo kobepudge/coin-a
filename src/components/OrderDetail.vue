@@ -34,23 +34,29 @@
       </n-descriptions-item>
       
       <n-descriptions-item label="收款二维码" v-if="order.payment_qr_url">
-        <n-image
-          :src="order.payment_qr_url"
-          width="100"
-          height="100"
-          object-fit="cover"
-          preview-disabled
-        />
+        <div class="image-container">
+          <img
+            :src="order.payment_qr_url"
+            alt="收款二维码"
+            class="qr-image cursor-pointer hover:opacity-80 transition-opacity"
+            style="width: 100px; height: 100px; object-fit: cover; border-radius: 4px; border: 1px solid #e5e7eb;"
+            @click="openImagePreview(order.payment_qr_url, '收款二维码')"
+            @error="handleImageError"
+          />
+        </div>
       </n-descriptions-item>
 
       <n-descriptions-item label="转账截图" v-if="order.transfer_screenshot_url">
-        <n-image
-          :src="order.transfer_screenshot_url"
-          width="120"
-          height="120"
-          object-fit="cover"
-          preview-disabled
-        />
+        <div class="image-container">
+          <img
+            :src="order.transfer_screenshot_url"
+            alt="转账截图"
+            class="screenshot-image cursor-pointer hover:opacity-80 transition-opacity"
+            style="width: 120px; height: 120px; object-fit: cover; border-radius: 4px; border: 1px solid #e5e7eb;"
+            @click="openImagePreview(order.transfer_screenshot_url, '转账截图')"
+            @error="handleImageError"
+          />
+        </div>
       </n-descriptions-item>
 
       <n-descriptions-item label="转账截图" v-else>
@@ -141,11 +147,34 @@
         编辑备注
       </n-button>
     </div>
+
+    <!-- 图片预览弹窗 -->
+    <n-modal
+      v-model:show="showImagePreview"
+      preset="card"
+      :title="previewTitle"
+      style="width: 90vw; max-width: 600px;"
+      :mask-closable="true"
+    >
+      <div class="flex flex-col items-center p-4">
+        <img
+          :src="previewImageUrl"
+          :alt="previewTitle"
+          class="max-w-full max-h-[70vh] border rounded-lg shadow-sm"
+          @error="handlePreviewImageError"
+        />
+        <div class="mt-4 text-sm text-gray-500 text-center space-y-1">
+          <div>右键点击图片可保存</div>
+          <div v-if="previewTitle === '收款二维码'">扫码或截图保存后使用</div>
+        </div>
+      </div>
+    </n-modal>
   </div>
 </template>
 
 <script setup lang="ts">
-import { NDescriptions, NDescriptionsItem, NTag, NImage, NDivider, NButton } from 'naive-ui'
+import { ref } from 'vue'
+import { NDescriptions, NDescriptionsItem, NTag, NModal, NDivider, NButton, useMessage } from 'naive-ui'
 import type { Order, OrderStatus } from '@/types'
 import { format } from 'date-fns'
 
@@ -160,6 +189,30 @@ interface Emits {
 
 defineProps<Props>()
 defineEmits<Emits>()
+
+const message = useMessage()
+
+// 图片预览状态
+const showImagePreview = ref(false)
+const previewImageUrl = ref('')
+const previewTitle = ref('')
+
+// 打开图片预览
+const openImagePreview = (url: string, title: string) => {
+  previewImageUrl.value = url
+  previewTitle.value = title
+  showImagePreview.value = true
+}
+
+// 处理图片加载错误
+const handleImageError = () => {
+  message.error('图片加载失败')
+}
+
+// 处理预览图片加载错误
+const handlePreviewImageError = () => {
+  message.error('预览图片加载失败')
+}
 
 const getStatusType = (status: OrderStatus) => {
   const typeMap = {
