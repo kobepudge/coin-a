@@ -202,13 +202,13 @@
       </template>
     </n-modal>
 
-    <!-- 转账截图查看弹窗 -->
-    <n-modal v-model:show="showScreenshotModal" preset="card" style="width: 600px" title="转账截图">
+    <!-- 赠送记录截图查看弹窗 -->
+    <n-modal v-model:show="showScreenshotModal" preset="card" style="width: 600px" title="赠送记录截图">
       <div class="text-center">
         <img
           v-if="currentScreenshotUrl"
           :src="currentScreenshotUrl"
-          alt="转账截图"
+          alt="赠送记录截图"
           class="max-w-full max-h-96 mx-auto rounded-lg shadow-lg"
           @error="handleImageError"
         />
@@ -360,7 +360,7 @@ const columns: DataTableColumns<Order> = [
     }
   },
   {
-    title: '转账截图',
+    title: '赠送记录截图',
     key: 'transfer_screenshot',
     width: 100,
     align: 'center',
@@ -512,7 +512,7 @@ const handleEditNotes = (order: Order) => {
   showEditNotesModal.value = true
 }
 
-// 查看转账截图
+// 查看赠送记录截图
 const handleViewScreenshot = (screenshotUrl: string) => {
   currentScreenshotUrl.value = screenshotUrl
   showScreenshotModal.value = true
