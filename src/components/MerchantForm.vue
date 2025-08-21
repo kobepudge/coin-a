@@ -63,10 +63,10 @@
       />
     </n-form-item>
 
-    <n-form-item label="支付宝账号" path="alipay_account">
+    <n-form-item label="支付宝收款账号" path="alipay_account">
       <n-input
         v-model:value="formData.alipay_account"
-        placeholder="请输入支付宝账号（可选）"
+        placeholder="请输入支付宝收款账号（可选）"
         clearable
       />
     </n-form-item>

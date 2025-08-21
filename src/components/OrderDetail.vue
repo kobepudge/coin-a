@@ -46,20 +46,20 @@
         </div>
       </n-descriptions-item>
 
-      <n-descriptions-item label="转账截图" v-if="order.transfer_screenshot_url">
+      <n-descriptions-item label="赠送记录截图" v-if="order.transfer_screenshot_url">
         <div class="image-container">
           <img
             :src="order.transfer_screenshot_url"
-            alt="转账截图"
+            alt="赠送记录截图"
             class="screenshot-image cursor-pointer hover:opacity-80 transition-opacity"
             style="width: 120px; height: 120px; object-fit: cover; border-radius: 4px; border: 1px solid #e5e7eb;"
-            @click="openImagePreview(order.transfer_screenshot_url, '转账截图')"
+            @click="openImagePreview(order.transfer_screenshot_url, '赠送记录截图')"
             @error="handleImageError"
           />
         </div>
       </n-descriptions-item>
 
-      <n-descriptions-item label="转账截图" v-else>
+      <n-descriptions-item label="赠送记录截图" v-else>
         <span class="text-gray-400">未上传</span>
       </n-descriptions-item>
       
